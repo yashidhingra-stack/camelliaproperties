@@ -1,0 +1,6 @@
+{
+  "name": "Camellia Properties",
+  "description": "A professional real estate website for Camellia Properties.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
