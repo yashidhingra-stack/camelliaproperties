@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, MapPin, Bed, Bath, Compass, Calendar, User, Phone, Check, ShieldCheck, Calculator, Mail, MessageSquare, Landmark, ArrowRight, Star, Heart, Trash2 } from 'lucide-react';
+import { X, MapPin, Bed, Bath, Compass, Calendar, User, Phone, Check, ShieldCheck, Calculator, Mail, MessageSquare, Landmark, ArrowRight, Star, Heart, Trash2, Edit3 } from 'lucide-react';
 import { Property, Inquiry } from '../types';
 
 interface PropertyDetailsModalProps {
@@ -8,9 +8,10 @@ interface PropertyDetailsModalProps {
   onClose: () => void;
   onInquirySubmit: (inquiry: Inquiry) => void;
   onDelete?: () => void;
+  onEdit?: () => void;
 }
 
-export default function PropertyDetailsModal({ property, onClose, onInquirySubmit, onDelete }: PropertyDetailsModalProps) {
+export default function PropertyDetailsModal({ property, onClose, onInquirySubmit, onDelete, onEdit }: PropertyDetailsModalProps) {
   if (!property) return null;
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -110,7 +111,16 @@ export default function PropertyDetailsModal({ property, onClose, onInquirySubmi
           >
             {/* Header / Actions bar */}
             <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-              {onDelete && !property.id?.startsWith('prop-') && (
+              {onEdit && (
+                <button 
+                  onClick={onEdit}
+                  className="p-2.5 rounded-full bg-white/85 backdrop-blur-md text-[#2c3d30] hover:bg-[#2c3d30] hover:text-white shadow-md transition-all duration-300"
+                  title="Edit Property"
+                >
+                  <Edit3 className="w-5 h-5" />
+                </button>
+              )}
+              {onDelete && (
                 <button 
                   onClick={onDelete}
                   className="p-2.5 rounded-full bg-white/85 backdrop-blur-md text-red-600 hover:bg-red-50 hover:text-red-700 shadow-md transition-colors"

@@ -10,7 +10,6 @@ import Testimonials from './components/Testimonials';
 import MissionVision from './components/MissionVision';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
-import { Analytics } from '@vercel/analytics/react';
 
 // Modals
 import PropertyDetailsModal from './components/PropertyDetailsModal';
@@ -21,7 +20,7 @@ import { initialProperties } from './data/mockProperties';
 import { Property, SearchFilters, Inquiry } from './types';
 
 // Firebase
-import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { db } from './lib/firebase';
 
 export default function App() {
@@ -34,8 +33,12 @@ export default function App() {
   // 3. Selection Modal State
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   
-  // 4. Posting Wizard Modal state
+  // 4. Posting Wizard Modal state (reused for editing)
   const [isPostOpen, setIsPostOpen] = useState(false);
+  const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
+
+  // Hidden demo property IDs list (persistent via localStorage)
+  const [hiddenDemoProperties, setHiddenDemoProperties] = useState<string[]>([]);
 
   // 5. Global Search Filters conforming to SearchFilters type
   const [filters, setFilters] = useState<SearchFilters>({
@@ -51,7 +54,7 @@ export default function App() {
     sortBy: 'relevance'
   });
 
-  // Load properties & favorites from localStorage on mount
+  // Load properties, favorites & hidden properties from localStorage on mount
   useEffect(() => {
     // Load favorites
     const storedFavs = localStorage.getItem('camellia_favorites');
@@ -63,6 +66,16 @@ export default function App() {
       }
     }
 
+    // Load hidden properties
+    const storedHidden = localStorage.getItem('camellia_hidden_demo_props');
+    if (storedHidden) {
+      try {
+        setHiddenDemoProperties(JSON.parse(storedHidden) as string[]);
+      } catch (e) {
+        setHiddenDemoProperties([]);
+      }
+    }
+
     // Subscribe to Firestore properties
     const q = query(collection(db, 'properties'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -71,7 +84,16 @@ export default function App() {
         id: doc.id
       })) as Property[];
       
-      setProperties([...firestoreProperties, ...initialProperties]);
+      const storedHiddenLocal = localStorage.getItem('camellia_hidden_demo_props');
+      let hiddenIds: string[] = [];
+      if (storedHiddenLocal) {
+        try {
+          hiddenIds = JSON.parse(storedHiddenLocal) as string[];
+        } catch (e) {}
+      }
+
+      const visibleDemoProperties = initialProperties.filter(p => !hiddenIds.includes(p.id));
+      setProperties([...firestoreProperties, ...visibleDemoProperties]);
     }, (error) => {
       console.error("Error fetching properties:", error);
     });
@@ -88,6 +110,12 @@ export default function App() {
       localStorage.setItem('camellia_favorites', JSON.stringify(updated));
       return updated;
     });
+  };
+
+  // Handler to trigger editing mode for a property
+  const handleEditProperty = (property: Property) => {
+    setPropertyToEdit(property);
+    setIsPostOpen(true);
   };
 
   // Handler to add custom user-created listing
@@ -125,12 +153,69 @@ export default function App() {
       alert("Failed to post property. Please try again.");
     }
   };
+
+  // Handler to update listing
+  const handlePropertyUpdate = async (updatedProperty: Property) => {
+    try {
+      const docData = { ...updatedProperty };
+      const propertyId = docData.id;
+      // @ts-ignore
+      delete docData.id;
+      
+      // Remove undefined values to prevent FirebaseError
+      Object.keys(docData).forEach(key => {
+        // @ts-ignore
+        if (docData[key] === undefined) {
+          // @ts-ignore
+          delete docData[key];
+        }
+      });
+
+      // Check if it is a demo property
+      if (propertyId.startsWith('prop-')) {
+        // Save to Firestore as a new document
+        await addDoc(collection(db, 'properties'), {
+          ...docData,
+          createdAt: serverTimestamp()
+        });
+        
+        // Hide the original demo property
+        setHiddenDemoProperties(prev => {
+          const updated = [...prev, propertyId];
+          localStorage.setItem('camellia_hidden_demo_props', JSON.stringify(updated));
+          return updated;
+        });
+
+        // Instantly update local state to feel super fast
+        setProperties(prev => prev.filter(p => p.id !== propertyId));
+      } else {
+        // Update document in Firestore
+        const docRef = doc(db, 'properties', propertyId);
+        await updateDoc(docRef, {
+          ...docData,
+          updatedAt: serverTimestamp()
+        });
+      }
+      
+      // Reset selected property and edit states
+      setSelectedProperty(null);
+      setPropertyToEdit(null);
+    } catch (error) {
+      console.error("Error updating property in Firestore:", error);
+      alert("Failed to update property. Please try again.");
+    }
+  };
   
   // Handler to delete property
   const handlePropertyDelete = async (propertyId: string) => {
     try {
-      // If it's a demo property, just remove it from local state (not Firestore, since it was never stored there)
-      if (initialProperties.find(p => p.id === propertyId)) {
+      // If it's a demo property, hide it persistently
+      if (propertyId.startsWith('prop-')) {
+        setHiddenDemoProperties(prev => {
+          const updated = [...prev, propertyId];
+          localStorage.setItem('camellia_hidden_demo_props', JSON.stringify(updated));
+          return updated;
+        });
         setProperties(prev => prev.filter(p => p.id !== propertyId));
         setSelectedProperty(null);
         return;
@@ -210,6 +295,8 @@ export default function App() {
           favorites={favorites}
           toggleFavorite={toggleFavorite}
           onDeleteProperty={handlePropertyDelete}
+          onEditProperty={handleEditProperty}
+          onPostPropertyClick={() => setIsPostOpen(true)}
         />
         
         {/* Botanical Identity & Values */}
@@ -232,16 +319,21 @@ export default function App() {
           onClose={() => setSelectedProperty(null)}
           onInquirySubmit={handleInquirySubmit}
           onDelete={() => handlePropertyDelete(selectedProperty.id)}
+          onEdit={() => handleEditProperty(selectedProperty)}
         />
       )}
 
       {/* Free Real Estate Multi-step Wizard listing creator */}
       <PostPropertyModal 
         isOpen={isPostOpen}
-        onClose={() => setIsPostOpen(false)}
+        onClose={() => {
+          setIsPostOpen(false);
+          setPropertyToEdit(null);
+        }}
         onPropertyAdd={handlePropertyAdd}
+        propertyToEdit={propertyToEdit}
+        onPropertyUpdate={handlePropertyUpdate}
       />
-      <Analytics />
     </div>
   );
 }

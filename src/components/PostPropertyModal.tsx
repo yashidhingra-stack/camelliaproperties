@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Building, DollarSign, MapPin, List, Eye, Sparkles, Check, ChevronRight, ChevronLeft, ShieldAlert } from 'lucide-react';
 import { Property } from '../types';
@@ -7,9 +7,11 @@ interface PostPropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPropertyAdd: (property: Property) => void;
+  propertyToEdit?: Property | null;
+  onPropertyUpdate?: (property: Property) => void;
 }
 
-export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd }: PostPropertyModalProps) {
+export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, propertyToEdit, onPropertyUpdate }: PostPropertyModalProps) {
   if (!isOpen) return null;
 
   const [step, setStep] = useState(1);
@@ -45,6 +47,68 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd }: Po
   const [postedBy, setPostedBy] = useState<'Owner' | 'Agent' | 'Builder'>('Owner');
 
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (propertyToEdit) {
+      setTitle(propertyToEdit.title);
+      setCategory(propertyToEdit.category);
+      setPropertyType(propertyToEdit.propertyType);
+      setCity(propertyToEdit.city);
+      setLocation(propertyToEdit.location);
+      
+      if (propertyToEdit.category === 'rent') {
+        setPriceInLakhs(propertyToEdit.price.toString());
+      } else {
+        setPriceInLakhs((propertyToEdit.price / 100000).toString());
+      }
+      
+      setArea(propertyToEdit.areaValue ? propertyToEdit.areaValue.toString() : '');
+      
+      if (propertyToEdit.area.includes('Sq. Yards')) {
+        setAreaUnit('Sq. Yards');
+      } else if (propertyToEdit.area.includes('Marla')) {
+        setAreaUnit('Marla');
+      } else {
+        setAreaUnit('sq. ft.');
+      }
+      
+      setBedrooms(propertyToEdit.bedrooms || 3);
+      setBathrooms(propertyToEdit.bathrooms || 3);
+      setPossessionStatus(propertyToEdit.possessionStatus);
+      setDescription(propertyToEdit.description);
+      setBrokerage(propertyToEdit.brokerage);
+      setFacing(propertyToEdit.facing || 'East');
+      setFloor(propertyToEdit.floor || '2nd Floor');
+      setAge(propertyToEdit.age || 'Brand New');
+      setSelectedAmenities(propertyToEdit.amenities);
+      setAgentName(propertyToEdit.agentName);
+      setAgentPhone(propertyToEdit.agentPhone);
+      setPostedBy(propertyToEdit.postedBy);
+      setUploadedImages(propertyToEdit.images || [propertyToEdit.image]);
+    } else {
+      setTitle('');
+      setCategory('buy');
+      setPropertyType('Apartment');
+      setCity('Mohali');
+      setLocation('');
+      setPriceInLakhs('');
+      setArea('');
+      setAreaUnit('sq. ft.');
+      setBedrooms(3);
+      setBathrooms(3);
+      setPossessionStatus('Ready to Move');
+      setDescription('');
+      setBrokerage('Zero Brokerage');
+      setFacing('East');
+      setFloor('2nd Floor');
+      setAge('Brand New');
+      setSelectedAmenities(["24x7 Security", "Power Backup", "Covered Parking"]);
+      setAgentName('');
+      setAgentPhone('');
+      setPostedBy('Owner');
+      setUploadedImages([]);
+    }
+  }, [propertyToEdit, isOpen]);
 
   // Handle Amenity Toggle
   const toggleAmenity = (amenity: string) => {
@@ -139,7 +203,7 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd }: Po
     }
 
     const newProperty: Property = {
-      id: `custom-prop-${Date.now()}`,
+      id: propertyToEdit ? propertyToEdit.id : `custom-prop-${Date.now()}`,
       title,
       description: description || `Premium ${propertyType} listing located at ${location}, ${city}. Carefully structured layout with exquisite natural lighting, high security, and high quality finishing. Contact agent for custom site visits.`,
       price: rawPrice,
@@ -163,13 +227,17 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd }: Po
       floor,
       age,
       postedBy,
-      postedDate: "Just now",
+      postedDate: propertyToEdit ? propertyToEdit.postedDate : "Just now",
       agentName,
       agentPhone,
-      agentImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+      agentImage: propertyToEdit ? propertyToEdit.agentImage : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
     };
 
-    onPropertyAdd(newProperty);
+    if (propertyToEdit && onPropertyUpdate) {
+      onPropertyUpdate(newProperty);
+    } else {
+      onPropertyAdd(newProperty);
+    }
     setSuccess(true);
     
     setTimeout(() => {
@@ -213,9 +281,16 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd }: Po
               <div>
                 <h2 className="text-xl font-light tracking-wide flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
-                  Post Your Property <span className="text-amber-400 font-bold uppercase text-xs bg-white/10 px-2 py-0.5 rounded-md">FREE</span>
+                  {propertyToEdit ? "Edit Your Property" : "Post Your Property"}{" "}
+                  <span className="text-amber-400 font-bold uppercase text-xs bg-white/10 px-2 py-0.5 rounded-md">
+                    {propertyToEdit ? "EDIT MODE" : "FREE"}
+                  </span>
                 </h2>
-                <p className="text-[10px] text-[#a5b5a2] uppercase tracking-widest mt-1">Join 5 Lakh+ active owners & brokers listing on our platform</p>
+                <p className="text-[10px] text-[#a5b5a2] uppercase tracking-widest mt-1">
+                  {propertyToEdit
+                    ? "Modify listing details and specifications for your property"
+                    : "Join 5 Lakh+ active owners & brokers listing on our platform"}
+                </p>
               </div>
               <button onClick={onClose} className="p-1 rounded-full hover:bg-white/10 transition-colors">
                 <X className="w-5 h-5" />
@@ -253,12 +328,16 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd }: Po
                   <div className="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-3xl font-bold shadow-sm">
                     <Check className="w-8 h-8" />
                   </div>
-                  <h3 className="text-2xl font-light text-[#2c3d30]">Property Posted Successfully!</h3>
+                  <h3 className="text-2xl font-light text-[#2c3d30]">
+                    {propertyToEdit ? "Property Updated Successfully!" : "Property Posted Successfully!"}
+                  </h3>
                   <p className="text-sm text-[#4f574d] max-w-md mx-auto leading-relaxed">
-                    Congratulations! Your listing is now verified and active in the search directory. Users can immediately view details, calculate EMIs, and contact you.
+                    {propertyToEdit
+                      ? "Your property changes have been successfully saved. All visitors will see the updated information immediately."
+                      : "Congratulations! Your listing is now verified and active in the search directory. Users can immediately view details, calculate EMIs, and contact you."}
                   </p>
                   <div className="inline-block py-1.5 px-4 bg-[#2c3d30] text-white rounded-full text-[10px] tracking-wider uppercase font-bold">
-                    Redirecting to search index...
+                    {propertyToEdit ? "Saving updates..." : "Redirecting to search index..."}
                   </div>
                 </motion.div>
               ) : (

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, ShieldCheck, Heart, Grid, List, SlidersHorizontal, ArrowUpDown, X, Sparkles, Filter, PhoneCall, RefreshCw, Layers, Check, Trash2 } from 'lucide-react';
+import { MapPin, ShieldCheck, Heart, Grid, List, SlidersHorizontal, ArrowUpDown, X, Sparkles, Filter, PhoneCall, RefreshCw, Layers, Check, Trash2, Edit3 } from 'lucide-react';
 import { Property, SearchFilters } from '../types';
 
 interface PropertiesProps {
@@ -11,9 +11,21 @@ interface PropertiesProps {
   favorites: string[];
   toggleFavorite: (id: string) => void;
   onDeleteProperty: (id: string) => void;
+  onEditProperty: (property: Property) => void;
+  onPostPropertyClick?: () => void;
 }
 
-export default function Properties({ properties, filters, setFilters, onPropertyClick, favorites, toggleFavorite, onDeleteProperty }: PropertiesProps) {
+export default function Properties({ 
+  properties, 
+  filters, 
+  setFilters, 
+  onPropertyClick, 
+  favorites, 
+  toggleFavorite, 
+  onDeleteProperty, 
+  onEditProperty,
+  onPostPropertyClick 
+}: PropertiesProps) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -382,7 +394,30 @@ export default function Properties({ properties, filters, setFilters, onProperty
 
             {/* Main Properties Grid/List Display */}
             <AnimatePresence mode="popLayout">
-              {filteredProperties.length === 0 ? (
+              {properties.length === 0 ? (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="bg-white rounded-3xl p-16 text-center border border-[#d1d6cf] shadow-sm space-y-5"
+                >
+                  <div className="w-20 h-20 bg-[#2c3d30]/5 text-[#2c3d30] rounded-full flex items-center justify-center mx-auto text-4xl">
+                    🏡
+                  </div>
+                  <h4 className="text-2xl font-light text-[#2c3d30]">Your Property Inventory is Empty</h4>
+                  <p className="text-sm text-[#788575] max-w-md mx-auto leading-relaxed">
+                    You have cleared all default demo listings. You can now build and display your custom real estate portfolio manually.
+                  </p>
+                  {onPostPropertyClick && (
+                    <button 
+                      onClick={onPostPropertyClick}
+                      className="inline-flex items-center gap-2 px-8 py-3 bg-[#2c3d30] hover:bg-[#3d5442] text-white text-xs uppercase tracking-widest font-bold rounded-full shadow-md transition-all duration-300 transform hover:scale-[1.02]"
+                    >
+                      Post Your First Property
+                    </button>
+                  )}
+                </motion.div>
+              ) : filteredProperties.length === 0 ? (
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -447,7 +482,7 @@ export default function Properties({ properties, filters, setFilters, onProperty
                             )}
                           </div>
 
-                          {/* Favorite + Delete buttons */}
+                          {/* Favorite + Edit + Delete buttons */}
                           <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
                             <button 
                               type="button"
@@ -458,8 +493,21 @@ export default function Properties({ properties, filters, setFilters, onProperty
                               className={`p-2 rounded-full backdrop-blur-md shadow-md transition-all ${
                                 isFav ? 'bg-red-500 text-white' : 'bg-white/90 text-[#2c3d30] hover:bg-white'
                               }`}
+                              title="Add to Wishlist"
                             >
                               <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
+                            </button>
+
+                            <button 
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditProperty(property);
+                              }}
+                              className="p-2 rounded-full bg-white/90 text-[#2c3d30] hover:bg-[#2c3d30] hover:text-white backdrop-blur-md shadow-md transition-all"
+                              title="Edit Property"
+                            >
+                              <Edit3 className="w-4 h-4" />
                             </button>
 
                             <button
@@ -472,6 +520,7 @@ export default function Properties({ properties, filters, setFilters, onProperty
                                 }
                               }}
                               className="p-2 rounded-full bg-white/90 text-red-600 hover:bg-red-600 hover:text-white backdrop-blur-md shadow-md transition-all"
+                              title="Delete Property"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
