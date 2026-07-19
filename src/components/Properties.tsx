@@ -482,7 +482,7 @@ export default function Properties({
                             )}
                           </div>
 
-                          {/* Favorite + Edit + Delete buttons */}
+                          {/* Favorite button */}
                           <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
                             <button 
                               type="button"
@@ -496,33 +496,6 @@ export default function Properties({
                               title="Add to Wishlist"
                             >
                               <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
-                            </button>
-
-                            <button 
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditProperty(property);
-                              }}
-                              className="p-2 rounded-full bg-white/90 text-[#2c3d30] hover:bg-[#2c3d30] hover:text-white backdrop-blur-md shadow-md transition-all"
-                              title="Edit Property"
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const confirmed = window.confirm(`Delete "${property.title}"? This cannot be undone.`);
-                                if (confirmed) {
-                                  onDeleteProperty(property.id);
-                                }
-                              }}
-                              className="p-2 rounded-full bg-white/90 text-red-600 hover:bg-red-600 hover:text-white backdrop-blur-md shadow-md transition-all"
-                              title="Delete Property"
-                            >
-                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                           {/* Quick indicators */}

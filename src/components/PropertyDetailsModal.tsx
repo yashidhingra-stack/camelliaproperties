@@ -111,24 +111,6 @@ export default function PropertyDetailsModal({ property, onClose, onInquirySubmi
           >
             {/* Header / Actions bar */}
             <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-              {onEdit && (
-                <button 
-                  onClick={onEdit}
-                  className="p-2.5 rounded-full bg-white/85 backdrop-blur-md text-[#2c3d30] hover:bg-[#2c3d30] hover:text-white shadow-md transition-all duration-300"
-                  title="Edit Property"
-                >
-                  <Edit3 className="w-5 h-5" />
-                </button>
-              )}
-              {onDelete && (
-                <button 
-                  onClick={onDelete}
-                  className="p-2.5 rounded-full bg-white/85 backdrop-blur-md text-red-600 hover:bg-red-50 hover:text-red-700 shadow-md transition-colors"
-                  title="Delete Property"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              )}
               <button 
                 onClick={() => setFavorite(!favorite)}
                 className={`p-2.5 rounded-full backdrop-blur-md transition-all duration-300 ${
