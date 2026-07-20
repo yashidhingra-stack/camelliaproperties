@@ -14,9 +14,14 @@ interface PropertyDetailsModalProps {
 export default function PropertyDetailsModal({ property, onClose, onInquirySubmit, onDelete, onEdit }: PropertyDetailsModalProps) {
   if (!property) return null;
 
+  const isStudio = import.meta.env.DEV || (typeof window !== 'undefined' && (
+    !window.location.hostname.includes('ais-pre')
+  ));
+
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [favorite, setFavorite] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // EMI Calculator State
   const [downPaymentPct, setDownPaymentPct] = useState(20); // 20% by default
@@ -111,6 +116,50 @@ export default function PropertyDetailsModal({ property, onClose, onInquirySubmi
           >
             {/* Header / Actions bar */}
             <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+              {isStudio && onEdit && !showDeleteConfirm && (
+                <button
+                  onClick={() => {
+                    onEdit();
+                    onClose();
+                  }}
+                  className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full sm:rounded-xl sm:px-3 sm:py-1.5 shadow-md flex items-center gap-1 text-xs font-semibold transition-all"
+                  title="Edit Listing (Studio Only)"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Edit</span>
+                </button>
+              )}
+              {isStudio && onDelete && (
+                showDeleteConfirm ? (
+                  <div className="flex items-center gap-1 bg-[#2c3d30] border border-[#d1d6cf]/50 p-1 rounded-full sm:rounded-xl shadow-md transition-all">
+                    <span className="text-[10px] font-bold text-red-400 px-2 hidden sm:inline">Delete?</span>
+                    <button
+                      onClick={() => {
+                        onDelete();
+                        onClose();
+                      }}
+                      className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-full sm:rounded-lg text-[10px] font-bold transition-all"
+                    >
+                      Yes, Delete
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="px-2.5 py-1 bg-[#f4f1ed] text-[#2c3d30] hover:bg-white rounded-full sm:rounded-lg text-[10px] font-bold transition-all"
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full sm:rounded-xl sm:px-3 sm:py-1.5 shadow-md flex items-center gap-1 text-xs font-semibold transition-all"
+                    title="Delete Listing (Studio Only)"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Delete</span>
+                  </button>
+                )
+              )}
               <button 
                 onClick={() => setFavorite(!favorite)}
                 className={`p-2.5 rounded-full backdrop-blur-md transition-all duration-300 ${

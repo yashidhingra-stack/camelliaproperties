@@ -208,6 +208,15 @@ export default function App() {
   
   // Handler to delete property
   const handlePropertyDelete = async (propertyId: string) => {
+    const isStudio = import.meta.env.DEV || (typeof window !== 'undefined' && (
+      !window.location.hostname.includes('ais-pre')
+    ));
+
+    if (!isStudio) {
+      alert("Deleting property listings is restricted to the development studio only.");
+      return;
+    }
+
     try {
       // If it's a demo property, hide it persistently
       if (propertyId.startsWith('prop-')) {
