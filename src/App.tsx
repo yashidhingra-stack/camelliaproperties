@@ -20,7 +20,7 @@ import { initialProperties } from './data/mockProperties';
 import { Property, SearchFilters, Inquiry } from './types';
 
 // Firebase
-import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, setDoc, deleteDoc, doc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { db } from './lib/firebase';
 
 export default function App() {
@@ -37,9 +37,6 @@ export default function App() {
   const [isPostOpen, setIsPostOpen] = useState(false);
   const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
 
-  // Hidden demo property IDs list (persistent via localStorage)
-  const [hiddenDemoProperties, setHiddenDemoProperties] = useState<string[]>([]);
-
   // 5. Global Search Filters conforming to SearchFilters type
   const [filters, setFilters] = useState<SearchFilters>({
     category: 'all',
@@ -54,7 +51,7 @@ export default function App() {
     sortBy: 'relevance'
   });
 
-  // Load properties, favorites & hidden properties from localStorage on mount
+  // Load properties & favorites on mount
   useEffect(() => {
     // Load favorites
     const storedFavs = localStorage.getItem('camellia_favorites');
@@ -66,34 +63,50 @@ export default function App() {
       }
     }
 
-    // Load hidden properties
-    const storedHidden = localStorage.getItem('camellia_hidden_demo_props');
-    if (storedHidden) {
-      try {
-        setHiddenDemoProperties(JSON.parse(storedHidden) as string[]);
-      } catch (e) {
-        setHiddenDemoProperties([]);
-      }
-    }
+    let isSeeding = false;
 
     // Subscribe to Firestore properties
     const q = query(collection(db, 'properties'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      if (snapshot.empty) {
+        if (isSeeding) return;
+        isSeeding = true;
+        console.log("Firestore properties collection is empty, seeding initial properties...");
+        try {
+          for (const property of initialProperties) {
+            const docData = { ...property };
+            const docId = property.id;
+            
+            // Remove undefined values to prevent FirebaseError
+            Object.keys(docData).forEach(key => {
+              // @ts-ignore
+              if (docData[key] === undefined) {
+                // @ts-ignore
+                delete docData[key];
+              }
+            });
+
+            // Set the document with the exact same ID so it's idempotent
+            await setDoc(doc(db, 'properties', docId), {
+              ...docData,
+              createdAt: serverTimestamp()
+            });
+          }
+          console.log("Initial properties seeded successfully!");
+        } catch (error) {
+          console.error("Error seeding initial properties:", error);
+        } finally {
+          isSeeding = false;
+        }
+        return;
+      }
+
       const firestoreProperties = snapshot.docs.map(doc => ({
         ...doc.data(),
         id: doc.id
       })) as Property[];
       
-      const storedHiddenLocal = localStorage.getItem('camellia_hidden_demo_props');
-      let hiddenIds: string[] = [];
-      if (storedHiddenLocal) {
-        try {
-          hiddenIds = JSON.parse(storedHiddenLocal) as string[];
-        } catch (e) {}
-      }
-
-      const visibleDemoProperties = initialProperties.filter(p => !hiddenIds.includes(p.id));
-      setProperties([...firestoreProperties, ...visibleDemoProperties]);
+      setProperties(firestoreProperties);
     }, (error) => {
       console.error("Error fetching properties:", error);
     });
@@ -171,31 +184,12 @@ export default function App() {
         }
       });
 
-      // Check if it is a demo property
-      if (propertyId.startsWith('prop-')) {
-        // Save to Firestore as a new document
-        await addDoc(collection(db, 'properties'), {
-          ...docData,
-          createdAt: serverTimestamp()
-        });
-        
-        // Hide the original demo property
-        setHiddenDemoProperties(prev => {
-          const updated = [...prev, propertyId];
-          localStorage.setItem('camellia_hidden_demo_props', JSON.stringify(updated));
-          return updated;
-        });
-
-        // Instantly update local state to feel super fast
-        setProperties(prev => prev.filter(p => p.id !== propertyId));
-      } else {
-        // Update document in Firestore
-        const docRef = doc(db, 'properties', propertyId);
-        await updateDoc(docRef, {
-          ...docData,
-          updatedAt: serverTimestamp()
-        });
-      }
+      // Update document in Firestore
+      const docRef = doc(db, 'properties', propertyId);
+      await updateDoc(docRef, {
+        ...docData,
+        updatedAt: serverTimestamp()
+      });
       
       // Reset selected property and edit states
       setSelectedProperty(null);
@@ -208,34 +202,12 @@ export default function App() {
   
   // Handler to delete property
   const handlePropertyDelete = async (propertyId: string) => {
-    const isStudio = import.meta.env.DEV || (typeof window !== 'undefined' && (
-      !window.location.hostname.includes('ais-pre')
-    ));
-
-    if (!isStudio) {
-      alert("Deleting property listings is restricted to the development studio only.");
-      return;
-    }
-
     try {
-      // If it's a demo property, hide it persistently
-      if (propertyId.startsWith('prop-')) {
-        setHiddenDemoProperties(prev => {
-          const updated = [...prev, propertyId];
-          localStorage.setItem('camellia_hidden_demo_props', JSON.stringify(updated));
-          return updated;
-        });
-        setProperties(prev => prev.filter(p => p.id !== propertyId));
-        setSelectedProperty(null);
-        return;
-      }
-
-      // Otherwise it's a real Firestore-backed property
       await deleteDoc(doc(db, 'properties', propertyId));
       setSelectedProperty(null);
     } catch (error) {
       console.error("Error deleting property:", error);
-      alert("Failed to delete property.");
+      alert("Failed to delete property. Please try again.");
     }
   };
 

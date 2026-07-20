@@ -14,9 +14,7 @@ interface PropertyDetailsModalProps {
 export default function PropertyDetailsModal({ property, onClose, onInquirySubmit, onDelete, onEdit }: PropertyDetailsModalProps) {
   if (!property) return null;
 
-  const isStudio = import.meta.env.DEV || (typeof window !== 'undefined' && (
-    !window.location.hostname.includes('ais-pre')
-  ));
+  const isStudio = true;
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [favorite, setFavorite] = useState(false);
@@ -123,7 +121,7 @@ export default function PropertyDetailsModal({ property, onClose, onInquirySubmi
                     onClose();
                   }}
                   className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full sm:rounded-xl sm:px-3 sm:py-1.5 shadow-md flex items-center gap-1 text-xs font-semibold transition-all"
-                  title="Edit Listing (Studio Only)"
+                  title="Edit Listing"
                 >
                   <Edit3 className="w-4 h-4" />
                   <span className="hidden sm:inline">Edit</span>
@@ -153,7 +151,7 @@ export default function PropertyDetailsModal({ property, onClose, onInquirySubmi
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
                     className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full sm:rounded-xl sm:px-3 sm:py-1.5 shadow-md flex items-center gap-1 text-xs font-semibold transition-all"
-                    title="Delete Listing (Studio Only)"
+                    title="Delete Listing"
                   >
                     <Trash2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Delete</span>
