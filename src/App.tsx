@@ -42,7 +42,7 @@ export default function App() {
 
   // 5. Global Search Filters conforming to SearchFilters type
   const [filters, setFilters] = useState<SearchFilters>({
-    category: 'buy',
+    category: 'all',
     query: '',
     city: 'all',
     propertyType: [],

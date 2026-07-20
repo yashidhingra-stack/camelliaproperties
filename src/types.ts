@@ -30,7 +30,7 @@ export interface Property {
 }
 
 export interface SearchFilters {
-  category: 'buy' | 'rent' | 'commercial' | 'plots';
+  category: 'all' | 'buy' | 'rent' | 'commercial' | 'plots';
   query: string;
   city: string;
   propertyType: string[];

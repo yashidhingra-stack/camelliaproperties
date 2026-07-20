@@ -504,37 +504,99 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">BHK Configuration</label>
-                            <div className="flex gap-1 bg-white p-1 rounded-xl border border-[#d1d6cf]">
-                              {[1, 2, 3, 4, 5].map((num) => (
+                            <div className="flex flex-col gap-2">
+                              <div className="flex gap-1 bg-white p-1 rounded-xl border border-[#d1d6cf] flex-wrap">
+                                {[1, 2, 3, 4, 5].map((num) => (
+                                  <button
+                                    key={num}
+                                    type="button"
+                                    onClick={() => setBedrooms(num)}
+                                    className={`flex-1 min-w-[45px] py-2 text-xs font-bold rounded-lg transition-all ${
+                                      bedrooms === num ? 'bg-[#2c3d30] text-white shadow-sm' : 'text-[#4f574d] hover:bg-[#e9e6e0]/30'
+                                    }`}
+                                  >
+                                    {num} BHK
+                                  </button>
+                                ))}
                                 <button
-                                  key={num}
                                   type="button"
-                                  onClick={() => setBedrooms(num)}
-                                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                                    bedrooms === num ? 'bg-[#2c3d30] text-white shadow-sm' : 'text-[#4f574d] hover:bg-[#e9e6e0]/30'
+                                  onClick={() => setBedrooms(6)}
+                                  className={`flex-1 min-w-[60px] py-2 text-xs font-bold rounded-lg transition-all ${
+                                    typeof bedrooms === 'number' && bedrooms > 5 ? 'bg-[#2c3d30] text-white shadow-sm' : 'text-[#4f574d] hover:bg-[#e9e6e0]/30'
                                   }`}
                                 >
-                                  {num} BHK
+                                  Custom
                                 </button>
-                              ))}
+                              </div>
+                              {typeof bedrooms === 'number' && bedrooms > 5 && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  className="flex items-center gap-2 pt-1"
+                                >
+                                  <span className="text-xs font-semibold text-[#4f574d]">Enter BHK count:</span>
+                                  <input
+                                    type="number"
+                                    min="6"
+                                    max="100"
+                                    value={bedrooms}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value);
+                                      setBedrooms(isNaN(val) ? 6 : val);
+                                    }}
+                                    className="w-20 bg-white border border-[#d1d6cf] rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-[#2c3d30] outline-none text-[#2c3d30] font-bold text-center"
+                                  />
+                                </motion.div>
+                              )}
                             </div>
                           </div>
 
                           <div>
                             <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Bathrooms</label>
-                            <div className="flex gap-1 bg-white p-1 rounded-xl border border-[#d1d6cf]">
-                              {[1, 2, 3, 4].map((num) => (
+                            <div className="flex flex-col gap-2">
+                              <div className="flex gap-1 bg-white p-1 rounded-xl border border-[#d1d6cf] flex-wrap">
+                                {[1, 2, 3, 4].map((num) => (
+                                  <button
+                                    key={num}
+                                    type="button"
+                                    onClick={() => setBathrooms(num)}
+                                    className={`flex-1 min-w-[40px] py-2 text-xs font-bold rounded-lg transition-all ${
+                                      bathrooms === num ? 'bg-[#2c3d30] text-white shadow-sm' : 'text-[#4f574d] hover:bg-[#e9e6e0]/30'
+                                    }`}
+                                  >
+                                    {num}
+                                  </button>
+                                ))}
                                 <button
-                                  key={num}
                                   type="button"
-                                  onClick={() => setBathrooms(num)}
-                                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                                    bathrooms === num ? 'bg-[#2c3d30] text-white shadow-sm' : 'text-[#4f574d] hover:bg-[#e9e6e0]/30'
+                                  onClick={() => setBathrooms(5)}
+                                  className={`flex-1 min-w-[60px] py-2 text-xs font-bold rounded-lg transition-all ${
+                                    typeof bathrooms === 'number' && bathrooms > 4 ? 'bg-[#2c3d30] text-white shadow-sm' : 'text-[#4f574d] hover:bg-[#e9e6e0]/30'
                                   }`}
                                 >
-                                  {num}
+                                  Custom
                                 </button>
-                              ))}
+                              </div>
+                              {typeof bathrooms === 'number' && bathrooms > 4 && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  className="flex items-center gap-2 pt-1"
+                                >
+                                  <span className="text-xs font-semibold text-[#4f574d]">Enter Bathroom count:</span>
+                                  <input
+                                    type="number"
+                                    min="5"
+                                    max="100"
+                                    value={bathrooms}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value);
+                                      setBathrooms(isNaN(val) ? 5 : val);
+                                    }}
+                                    className="w-20 bg-white border border-[#d1d6cf] rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-[#2c3d30] outline-none text-[#2c3d30] font-bold text-center"
+                                  />
+                                </motion.div>
+                              )}
                             </div>
                           </div>
                         </div>

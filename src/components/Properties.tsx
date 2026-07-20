@@ -36,14 +36,38 @@ export default function Properties({
   const amenitiesOptions = ["Swimming Pool", "Gym", "Club House", "24x7 Security", "Power Backup", "Covered Parking", "Intercom", "Children's Play Area"];
 
   // Category change helper
-  const handleCategoryChange = (cat: 'buy' | 'rent' | 'commercial' | 'plots') => {
-    setFilters(prev => ({
-      ...prev,
-      category: cat,
-      // Reset some incompatible filters
-      propertyType: cat === 'plots' ? ['Plot'] : cat === 'commercial' ? ['Commercial Office', 'Retail Shop'] : prev.propertyType,
-      bedrooms: cat === 'commercial' || cat === 'plots' ? [] : prev.bedrooms
-    }));
+  const handleCategoryChange = (cat: 'all' | 'buy' | 'rent' | 'commercial' | 'plots') => {
+    setFilters(prev => {
+      let newPropertyType = prev.propertyType;
+      
+      if (cat === 'plots') {
+        newPropertyType = ['Plot'];
+      } else if (cat === 'commercial') {
+        newPropertyType = ['Commercial Office', 'Retail Shop'];
+      } else {
+        // If switching to buy or rent, and previous selection contained non-residential items (like Plot or Commercial), reset it
+        const nonResidential = ['Plot', 'Commercial Office', 'Retail Shop'];
+        const hasNonResidential = prev.propertyType.some(t => nonResidential.includes(t));
+        if (hasNonResidential) {
+          newPropertyType = [];
+        }
+      }
+
+      // Reset budget if changing from/to rent to prevent incompatible budgetMax filters
+      const wasRent = prev.category === 'rent';
+      const isRent = cat === 'rent';
+      const budgetMax = (wasRent !== isRent) 
+        ? (isRent ? 200000 : 50000000)
+        : prev.budgetMax;
+
+      return {
+        ...prev,
+        category: cat,
+        propertyType: newPropertyType,
+        budgetMax,
+        bedrooms: cat === 'commercial' || cat === 'plots' ? [] : prev.bedrooms
+      };
+    });
   };
 
   // Toggle Property Type
@@ -87,25 +111,25 @@ export default function Properties({
 
   // Reset Filters
   const resetFilters = () => {
-    setFilters({
-      category: 'buy',
+    setFilters(prev => ({
+      category: prev.category,
       query: '',
       city: 'all',
-      propertyType: [],
+      propertyType: prev.category === 'plots' ? ['Plot'] : prev.category === 'commercial' ? ['Commercial Office', 'Retail Shop'] : [],
       budgetMin: 0,
-      budgetMax: 50000000,
+      budgetMax: prev.category === 'rent' ? 200000 : 50000000,
       bedrooms: [],
       possessionStatus: [],
       amenities: [],
       sortBy: 'relevance'
-    });
+    }));
   };
 
   // Process and Filter listings dynamically
   const filteredProperties = useMemo(() => {
     return properties.filter(prop => {
       // 1. Category Filter
-      if (prop.category !== filters.category) return false;
+      if (filters.category !== 'all' && prop.category !== filters.category) return false;
 
       // 2. Text Search Query (locality, title, city)
       if (filters.query) {
@@ -130,7 +154,13 @@ export default function Properties({
       // 6. BHK Configuration Filter (For residential only)
       if (filters.category !== 'commercial' && filters.category !== 'plots') {
         if (filters.bedrooms.length > 0) {
-          if (!prop.bedrooms || !filters.bedrooms.includes(prop.bedrooms)) return false;
+          const hasMatchingBedrooms = filters.bedrooms.some(bhk => {
+            if (bhk === 5) {
+              return prop.bedrooms !== null && prop.bedrooms >= 5;
+            }
+            return prop.bedrooms === bhk;
+          });
+          if (!hasMatchingBedrooms) return false;
         }
       }
 
@@ -174,7 +204,7 @@ export default function Properties({
 
           {/* Quick tab filters like 99acres */}
           <div className="inline-flex p-1 bg-white border border-[#d1d6cf] rounded-2xl shadow-sm max-w-full overflow-x-auto">
-            {(['buy', 'rent', 'commercial', 'plots'] as const).map((cat) => (
+            {(['all', 'buy', 'rent', 'commercial', 'plots'] as const).map((cat) => (
               <button
                 key={cat}
                 onClick={() => handleCategoryChange(cat)}
@@ -184,7 +214,7 @@ export default function Properties({
                     : 'text-[#4f574d] hover:text-[#2c3d30]'
                 }`}
               >
-                {cat === 'buy' ? 'Buy residential' : cat === 'rent' ? 'Rent residential' : cat}
+                {cat === 'all' ? 'All Properties' : cat === 'buy' ? 'Buy residential' : cat === 'rent' ? 'Rent residential' : cat}
               </button>
             ))}
           </div>
@@ -239,8 +269,8 @@ export default function Properties({
               {filters.category !== 'commercial' && filters.category !== 'plots' && (
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-[#788575] tracking-widest mb-2">No. of Bedrooms</label>
-                  <div className="grid grid-cols-4 gap-1">
-                    {[1, 2, 3, 4].map((bhk) => {
+                  <div className="grid grid-cols-5 gap-1">
+                    {[1, 2, 3, 4, 5].map((bhk) => {
                       const isSelected = filters.bedrooms.includes(bhk);
                       return (
                         <button
@@ -253,7 +283,7 @@ export default function Properties({
                               : 'bg-white border-[#d1d6cf] text-[#4f574d] hover:bg-[#e9e6e0]/30'
                           }`}
                         >
-                          {bhk}B
+                          {bhk === 5 ? '5+B' : `${bhk}B`}
                         </button>
                       );
                     })}
@@ -614,8 +644,8 @@ export default function Properties({
               {filters.category !== 'commercial' && filters.category !== 'plots' && (
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-[#788575] tracking-widest mb-2">Configuration</label>
-                  <div className="grid grid-cols-4 gap-1">
-                    {[1, 2, 3, 4].map((bhk) => {
+                  <div className="grid grid-cols-5 gap-1">
+                    {[1, 2, 3, 4, 5].map((bhk) => {
                       const isSelected = filters.bedrooms.includes(bhk);
                       return (
                         <button
@@ -628,7 +658,7 @@ export default function Properties({
                               : 'bg-white border-[#d1d6cf] text-[#4f574d]'
                           }`}
                         >
-                          {bhk}B
+                          {bhk === 5 ? '5+B' : `${bhk}B`}
                         </button>
                       );
                     })}
