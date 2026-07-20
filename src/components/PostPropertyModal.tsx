@@ -169,18 +169,21 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title || !location || !priceInLakhs || !area || !agentName || !agentPhone) {
-      alert("Please fill in all required fields.");
-      return;
-    }
+    // Fields are now optional, we provide sensible fallbacks:
+    const finalTitle = title.trim() || `Premium ${propertyType}`;
+    const finalLocation = location.trim() || "Aerocity";
+    const finalAgentName = agentName.trim() || "Camellia Representative";
+    const finalAgentPhone = agentPhone.trim() || "+91 98765 43210";
 
     // Convert price to raw Rupees
-    const rawPrice = category === 'rent' ? Number(priceInLakhs) : Number(priceInLakhs) * 100000;
+    const rawPrice = category === 'rent' ? Number(priceInLakhs || 0) : Number(priceInLakhs || 0) * 100000;
     
     // Formatting the price string
     let formattedPrice = '';
-    const numericPrice = Number(priceInLakhs);
-    if (category === 'rent') {
+    const numericPrice = Number(priceInLakhs || 0);
+    if (!priceInLakhs || numericPrice === 0) {
+      formattedPrice = 'Price on Request';
+    } else if (category === 'rent') {
       formattedPrice = `₹${numericPrice.toLocaleString('en-IN')} / month`;
     } else {
       if (numericPrice >= 100) {
@@ -204,14 +207,14 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
 
     const newProperty: Property = {
       id: propertyToEdit ? propertyToEdit.id : `custom-prop-${Date.now()}`,
-      title,
-      description: description || `Premium ${propertyType} listing located at ${location}, ${city}. Carefully structured layout with exquisite natural lighting, high security, and high quality finishing. Contact agent for custom site visits.`,
+      title: finalTitle,
+      description: description || `Premium ${propertyType} listing located at ${finalLocation}, ${city}. Carefully structured layout with exquisite natural lighting, high security, and high quality finishing. Contact agent for custom site visits.`,
       price: rawPrice,
       priceFormatted: formattedPrice,
-      location,
+      location: finalLocation,
       city,
-      area: `${Number(area).toLocaleString('en-IN')} ${areaUnit}`,
-      areaValue: Number(area),
+      area: area ? `${Number(area).toLocaleString('en-IN')} ${areaUnit}` : 'Area on request',
+      areaValue: area ? Number(area) : 0,
       bedrooms: bedrooms === 'N/A' ? null : bedrooms,
       bathrooms: bathrooms === 'N/A' ? null : bathrooms,
       propertyType,
@@ -228,8 +231,8 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
       age,
       postedBy,
       postedDate: propertyToEdit ? propertyToEdit.postedDate : "Just now",
-      agentName,
-      agentPhone,
+      agentName: finalAgentName,
+      agentPhone: finalAgentPhone,
       agentImage: propertyToEdit ? propertyToEdit.agentImage : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
     };
 
@@ -351,10 +354,9 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                     >
                       {/* Property Title */}
                       <div>
-                        <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Property Listing Title *</label>
+                        <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Property Listing Title (Optional)</label>
                         <input 
                           type="text"
-                          required
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           placeholder="e.g. Spacious 3 BHK Builder Floor with modular kitchen"
@@ -383,7 +385,7 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                       {/* Property Type Dropdown */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Property Type *</label>
+                          <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Property Type (Optional)</label>
                           <select 
                             value={propertyType}
                             onChange={(e) => setPropertyType(e.target.value as any)}
@@ -399,7 +401,7 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">City *</label>
+                          <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">City (Optional)</label>
                           <select 
                             value={city}
                             onChange={(e) => setCity(e.target.value)}
@@ -415,12 +417,11 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
 
                       {/* Locality Search Input */}
                       <div>
-                        <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Locality / Sector Name *</label>
+                        <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Locality / Sector Name (Optional)</label>
                         <div className="relative">
                           <MapPin className="absolute left-3.5 top-3.5 text-[#788575] w-4 h-4" />
                           <input 
                             type="text"
-                            required
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
                             placeholder="e.g. Aerocity, Sector 82, Sector 115"
@@ -433,9 +434,8 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                       <div className="flex justify-end pt-4">
                         <button
                           type="button"
-                          disabled={!title || !location}
                           onClick={nextStep}
-                          className="px-6 py-3 bg-[#2c3d30] hover:bg-[#3d5442] text-white text-xs uppercase tracking-widest font-semibold rounded-full flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-6 py-3 bg-[#2c3d30] hover:bg-[#3d5442] text-white text-xs uppercase tracking-widest font-semibold rounded-full flex items-center gap-1.5 shadow-md transition-colors"
                         >
                           Continue <ChevronRight className="w-4 h-4" />
                         </button>
@@ -454,13 +454,12 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">
-                            {category === 'rent' ? 'Monthly Rent (in Rupees) *' : 'Expected Price (in Lakhs INR) *'}
+                            {category === 'rent' ? 'Monthly Rent (in Rupees)' : 'Expected Price (in Lakhs INR)'}
                           </label>
                           <div className="relative">
                             <span className="absolute left-3.5 top-3.5 text-xs font-bold text-[#788575]">₹</span>
                             <input 
                               type="number"
-                              required
                               value={priceInLakhs}
                               onChange={(e) => setPriceInLakhs(e.target.value)}
                               placeholder={category === 'rent' ? 'e.g. 18000' : 'e.g. 85 (for 85 Lakhs)'}
@@ -478,11 +477,10 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Super Built-up Area *</label>
+                          <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Super Built-up Area</label>
                           <div className="flex gap-2">
                             <input 
                               type="number"
-                              required
                               value={area}
                               onChange={(e) => setArea(e.target.value)}
                               placeholder="e.g. 1800"
@@ -505,7 +503,7 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                       {propertyType !== 'Plot' && propertyType !== 'Commercial Office' && propertyType !== 'Retail Shop' && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">BHK Configuration *</label>
+                            <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">BHK Configuration</label>
                             <div className="flex gap-1 bg-white p-1 rounded-xl border border-[#d1d6cf]">
                               {[1, 2, 3, 4, 5].map((num) => (
                                 <button
@@ -523,7 +521,7 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                           </div>
 
                           <div>
-                            <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Bathrooms *</label>
+                            <label className="block text-xs font-bold text-[#4f574d] uppercase tracking-wider mb-2">Bathrooms</label>
                             <div className="flex gap-1 bg-white p-1 rounded-xl border border-[#d1d6cf]">
                               {[1, 2, 3, 4].map((num) => (
                                 <button
@@ -653,9 +651,8 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                         </button>
                         <button
                           type="button"
-                          disabled={!priceInLakhs || !area}
                           onClick={nextStep}
-                          className="px-6 py-3 bg-[#2c3d30] hover:bg-[#3d5442] text-white text-xs uppercase tracking-widest font-semibold rounded-full flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-6 py-3 bg-[#2c3d30] hover:bg-[#3d5442] text-white text-xs uppercase tracking-widest font-semibold rounded-full flex items-center gap-1.5 shadow-md transition-colors"
                         >
                           Continue <ChevronRight className="w-4 h-4" />
                         </button>
@@ -766,10 +763,9 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-[10px] font-bold text-[#4f574d] uppercase mb-1">Your Full Name *</label>
+                            <label className="block text-[10px] font-bold text-[#4f574d] uppercase mb-1">Your Full Name (Optional)</label>
                             <input 
                               type="text"
-                              required
                               value={agentName}
                               onChange={(e) => setAgentName(e.target.value)}
                               placeholder="Name"
@@ -778,10 +774,9 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                           </div>
 
                           <div>
-                            <label className="block text-[10px] font-bold text-[#4f574d] uppercase mb-1">Active Contact Number *</label>
+                            <label className="block text-[10px] font-bold text-[#4f574d] uppercase mb-1">Active Contact Number (Optional)</label>
                             <input 
                               type="tel"
-                              required
                               value={agentPhone}
                               onChange={(e) => setAgentPhone(e.target.value)}
                               placeholder="Mobile"
@@ -810,8 +805,7 @@ export default function PostPropertyModal({ isOpen, onClose, onPropertyAdd, prop
                         </button>
                         <button
                           type="submit"
-                          disabled={!agentName || !agentPhone}
-                          className="px-8 py-3 bg-[#2c3d30] hover:bg-[#3d5442] text-white text-xs uppercase tracking-widest font-semibold rounded-full flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-8 py-3 bg-[#2c3d30] hover:bg-[#3d5442] text-white text-xs uppercase tracking-widest font-semibold rounded-full flex items-center gap-1.5 shadow-md transition-colors"
                         >
                           Publish Listing FREE <Check className="w-4 h-4" />
                         </button>
