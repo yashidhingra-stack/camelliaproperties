@@ -208,10 +208,29 @@ export default function App() {
   };
 
   // Handler for direct broker lead form submit
-  const handleInquirySubmit = (inquiry: Inquiry) => {
-    console.log("Lead generated on Camellia Properties portal:", inquiry);
-    // In a production server-side scenario we would POST to an API route proxy.
-    // For local experience we trigger visual success indicator inside modal.
+  const handleInquirySubmit = async (inquiry: Inquiry) => {
+    try {
+      await addDoc(collection(db, 'inquiries'), {
+        ...inquiry,
+        recipient: 'Romaldeep Singh',
+        recipientPhone: '9564000003',
+        createdAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error("Error saving inquiry to Firestore:", err);
+    }
+
+    const formattedMsg = `*New Property Inquiry for Romaldeep Singh*\n\n` +
+      `*Property:* ${inquiry.propertyName}\n` +
+      `*Client Name:* ${inquiry.name}\n` +
+      `*Phone Number:* ${inquiry.phone}\n` +
+      (inquiry.email ? `*Email:* ${inquiry.email}\n` : '') +
+      `*User Type:* ${inquiry.userType}\n` +
+      `*Message:* ${inquiry.message}`;
+
+    const encodedText = encodeURIComponent(formattedMsg);
+    const whatsappUrl = `https://wa.me/919564000003?text=${encodedText}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   return (

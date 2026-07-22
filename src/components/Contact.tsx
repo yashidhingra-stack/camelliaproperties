@@ -1,7 +1,54 @@
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, MessageSquare, Send } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function Contact() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !phone) return;
+
+    try {
+      await addDoc(collection(db, 'inquiries'), {
+        propertyName: 'General Contact Inquiry',
+        name,
+        email,
+        phone,
+        message,
+        recipient: 'Romaldeep Singh',
+        recipientPhone: '9564000003',
+        createdAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error("Error saving contact message:", err);
+    }
+
+    const formattedText = `*New Contact Inquiry for Romaldeep Singh*\n\n` +
+      `*Name:* ${name}\n` +
+      `*Phone Number:* ${phone}\n` +
+      (email ? `*Email:* ${email}\n` : '') +
+      `*Message:* ${message || 'Interested in property consultation.'}`;
+
+    const whatsappUrl = `https://wa.me/919564000003?text=${encodeURIComponent(formattedText)}`;
+    window.open(whatsappUrl, '_blank');
+
+    setIsSubmitted(true);
+    setTimeout(() => {
+      setIsSubmitted(false);
+      setName('');
+      setEmail('');
+      setPhone('');
+      setMessage('');
+    }, 6000);
+  };
+
   return (
     <section id="contact" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -84,27 +131,84 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="bg-[#f4f1ed] p-10 rounded-3xl border border-[#d1d6cf]"
           >
-            <h3 className="text-2xl font-light text-[#2c3d30] mb-8">Send us a Message</h3>
-            <form className="space-y-6">
+            <h3 className="text-2xl font-light text-[#2c3d30] mb-2">Send us a Message</h3>
+            <p className="text-xs text-[#4f574d] mb-6">Inquiries are sent directly to Romaldeep Singh (+91 95640 00003)</p>
+            
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="name" className="block text-[11px] uppercase tracking-[0.15em] font-semibold text-[#4f574d] mb-2">Full Name</label>
-                <input type="text" id="name" className="w-full bg-white border border-[#d1d6cf] text-[#2c3d30] p-3 rounded-lg focus:border-[#2c3d30] focus:ring-1 focus:ring-[#2c3d30] transition-colors outline-none" placeholder="John Doe" />
+                <label htmlFor="name" className="block text-[11px] uppercase tracking-[0.15em] font-semibold text-[#4f574d] mb-2">Full Name *</label>
+                <input 
+                  type="text" 
+                  id="name" 
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-white border border-[#d1d6cf] text-[#2c3d30] p-3 rounded-lg focus:border-[#2c3d30] focus:ring-1 focus:ring-[#2c3d30] transition-colors outline-none text-xs font-medium" 
+                  placeholder="Your Name" 
+                />
               </div>
               <div>
                 <label htmlFor="email" className="block text-[11px] uppercase tracking-[0.15em] font-semibold text-[#4f574d] mb-2">Email Address</label>
-                <input type="email" id="email" className="w-full bg-white border border-[#d1d6cf] text-[#2c3d30] p-3 rounded-lg focus:border-[#2c3d30] focus:ring-1 focus:ring-[#2c3d30] transition-colors outline-none" placeholder="john@example.com" />
+                <input 
+                  type="email" 
+                  id="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-white border border-[#d1d6cf] text-[#2c3d30] p-3 rounded-lg focus:border-[#2c3d30] focus:ring-1 focus:ring-[#2c3d30] transition-colors outline-none text-xs font-medium" 
+                  placeholder="john@example.com (Optional)" 
+                />
               </div>
               <div>
-                <label htmlFor="phone" className="block text-[11px] uppercase tracking-[0.15em] font-semibold text-[#4f574d] mb-2">Phone Number</label>
-                <input type="tel" id="phone" className="w-full bg-white border border-[#d1d6cf] text-[#2c3d30] p-3 rounded-lg focus:border-[#2c3d30] focus:ring-1 focus:ring-[#2c3d30] transition-colors outline-none" placeholder="+91 XXXXX XXXXX" />
+                <label htmlFor="phone" className="block text-[11px] uppercase tracking-[0.15em] font-semibold text-[#4f574d] mb-2">Phone Number *</label>
+                <input 
+                  type="tel" 
+                  id="phone" 
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-white border border-[#d1d6cf] text-[#2c3d30] p-3 rounded-lg focus:border-[#2c3d30] focus:ring-1 focus:ring-[#2c3d30] transition-colors outline-none text-xs font-medium" 
+                  placeholder="+91 95640 00003" 
+                />
               </div>
               <div>
                 <label htmlFor="message" className="block text-[11px] uppercase tracking-[0.15em] font-semibold text-[#4f574d] mb-2">Message</label>
-                <textarea id="message" rows={4} className="w-full bg-white border border-[#d1d6cf] text-[#2c3d30] p-3 rounded-lg focus:border-[#2c3d30] focus:ring-1 focus:ring-[#2c3d30] transition-colors outline-none resize-none" placeholder="How can we help you?"></textarea>
+                <textarea 
+                  id="message" 
+                  rows={3} 
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full bg-white border border-[#d1d6cf] text-[#2c3d30] p-3 rounded-lg focus:border-[#2c3d30] focus:ring-1 focus:ring-[#2c3d30] transition-colors outline-none resize-none text-xs font-medium" 
+                  placeholder="How can we help you?"
+                ></textarea>
               </div>
-              <button type="button" className="w-full bg-[#2c3d30] text-white text-[11px] uppercase tracking-[0.2em] font-semibold py-4 rounded-full hover:bg-[#3a4f40] transition-colors mt-4">
-                Send Message
+
+              <button 
+                type="submit" 
+                className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white text-[11px] uppercase tracking-[0.15em] font-bold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Send Message to Romaldeep Singh (+91 95640 00003)
               </button>
+
+              {isSubmitted && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-medium text-center space-y-2"
+                >
+                  <p className="font-bold">🎉 Message Sent to Romaldeep Singh!</p>
+                  <p className="text-[11px] text-emerald-800">Your inquiry has been logged and sent via WhatsApp (+91 95640 00003).</p>
+                  <a 
+                    href={`https://wa.me/919564000003?text=${encodeURIComponent(`Hi Romaldeep Singh,\n\nName: ${name}\nPhone: ${phone}\nMessage: ${message}`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366] text-white font-bold rounded-lg text-[10px] uppercase tracking-wider shadow-sm"
+                  >
+                    <Send className="w-3 h-3" />
+                    Open WhatsApp Chat
+                  </a>
+                </motion.div>
+              )}
             </form>
           </motion.div>
         </div>

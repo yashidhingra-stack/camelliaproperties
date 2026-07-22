@@ -520,19 +520,33 @@ export default function PropertyDetailsModal({ property, onClose, onInquirySubmi
 
                       <button 
                         type="submit" 
-                        className="w-full py-3 bg-white hover:bg-[#e9e6e0] border border-[#d1d6cf] text-[#2c3d30] rounded-xl font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm"
+                        className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
                       >
-                        <Mail className="w-4 h-4" />
-                        Send Email/SMS Inquiry
+                        <MessageSquare className="w-4 h-4" />
+                        Send Message to Romaldeep Singh (+91 95640 00003)
                       </button>
 
                       {isSubmitted && (
                         <motion.div 
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-3 bg-emerald-50 text-emerald-800 text-center rounded-xl text-[11px] font-medium border border-emerald-200"
+                          className="p-3 bg-emerald-50 text-emerald-900 text-center rounded-xl text-[11px] font-medium border border-emerald-200 space-y-2"
                         >
-                          🎉 Inquiry sent successfully! Our lead team & the listing builder will contact you via phone within 10 minutes.
+                          <p className="font-bold text-xs text-emerald-900">
+                            🎉 Message Dispatched to Romaldeep Singh (+91 95640 00003)!
+                          </p>
+                          <p className="text-[10px] text-emerald-700">
+                            Your inquiry has been stored & dispatched to Romaldeep Singh on WhatsApp.
+                          </p>
+                          <a 
+                            href={`https://wa.me/919564000003?text=${encodeURIComponent(`*New Property Inquiry for Romaldeep Singh*\n\n*Property:* ${property.title}\n*Location:* ${property.location}, ${property.city}\n*Client Name:* ${name}\n*Phone:* ${phone}\n*User Type:* ${userType}\n*Message:* ${message}`)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#25D366] hover:bg-[#1faa51] text-white font-bold rounded-lg text-[10px] uppercase tracking-wider transition-all shadow-sm"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            Open WhatsApp Chat Directly
+                          </a>
                         </motion.div>
                       )}
                     </form>
