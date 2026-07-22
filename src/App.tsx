@@ -167,48 +167,17 @@ export default function App() {
     }
   };
 
-  // Handler to update listing
-  const handlePropertyUpdate = async (updatedProperty: Property) => {
-    try {
-      const docData = { ...updatedProperty };
-      const propertyId = docData.id;
-      // @ts-ignore
-      delete docData.id;
-      
-      // Remove undefined values to prevent FirebaseError
-      Object.keys(docData).forEach(key => {
-        // @ts-ignore
-        if (docData[key] === undefined) {
-          // @ts-ignore
-          delete docData[key];
-        }
-      });
-
-      // Update document in Firestore
-      const docRef = doc(db, 'properties', propertyId);
-      await updateDoc(docRef, {
-        ...docData,
-        updatedAt: serverTimestamp()
-      });
-      
-      // Reset selected property and edit states
-      setSelectedProperty(null);
-      setPropertyToEdit(null);
-    } catch (error) {
-      console.error("Error updating property in Firestore:", error);
-      alert("Failed to update property. Please try again.");
-    }
+  // Handler to update listing (Locked)
+  const handlePropertyUpdate = async (_updatedProperty: Property) => {
+    alert("Property listings are locked and cannot be modified.");
+    setSelectedProperty(null);
+    setPropertyToEdit(null);
   };
   
-  // Handler to delete property
-  const handlePropertyDelete = async (propertyId: string) => {
-    try {
-      await deleteDoc(doc(db, 'properties', propertyId));
-      setSelectedProperty(null);
-    } catch (error) {
-      console.error("Error deleting property:", error);
-      alert("Failed to delete property. Please try again.");
-    }
+  // Handler to delete property (Locked)
+  const handlePropertyDelete = async (_propertyId: string) => {
+    alert("Property listings are locked and cannot be deleted.");
+    setSelectedProperty(null);
   };
 
   // Handler when Navbar Wishlist indicator is clicked
@@ -299,8 +268,6 @@ export default function App() {
           property={selectedProperty}
           onClose={() => setSelectedProperty(null)}
           onInquirySubmit={handleInquirySubmit}
-          onDelete={() => handlePropertyDelete(selectedProperty.id)}
-          onEdit={() => handleEditProperty(selectedProperty)}
         />
       )}
 
